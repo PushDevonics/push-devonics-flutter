@@ -15,6 +15,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import pro.devonics.push.network.ApiHelper
+import pro.devonics.push.network.RetrofitBuilder
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -64,6 +66,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Send pushData to intent
         intent?.putExtra("push_type", remoteMessage.data["push_type"])
         intent?.putExtra("push_id", remoteMessage.data["push_id"])
+        intent?.putExtra("deeplink", remoteMessage.data["deeplink"])
 
         //Log.d(TAG, "push_type: ${remoteMessage.data["push_type"]}")
         //Log.d(TAG, "push_id: ${remoteMessage.data["push_id"]}")
@@ -95,24 +98,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         if (remoteMessage.data["image"] != null && remoteMessage.notification?.imageUrl == null) {
             val builder = NotificationCompat.Builder(this, channelId)
-                //.setSmallIcon(R.mipmap.ic_launcher)
                 .setSmallIcon(resId)
                 .setContentTitle(remoteMessage.notification?.title)
                 .setContentText(remoteMessage.notification?.body)
-                //.setContentText("https://www.google.com.ua/")
-                //.setLargeIcon(largeIcon)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setAutoCancel(true)
                 .setChannelId(channelId)
-                .setStyle(NotificationCompat.BigPictureStyle()
+                .setStyle(
+                    NotificationCompat.BigPictureStyle()
                     .bigPicture(image)
                     //.bigLargeIcon(largeIcon)
                 )
                 .setContentIntent(pendingIntent)
 
             val notificationManager = NotificationManagerCompat.from(this)
-            /*val notificationManager =
-                getSystemService(NOTIFICATION_SERVICE) as NotificationManager*/
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
                     channelId,
@@ -126,11 +126,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (remoteMessage.data["image"] != null && remoteMessage.notification?.imageUrl != null) {
 
             val builder = NotificationCompat.Builder(this, channelId)
-                //.setSmallIcon(R.mipmap.ic_launcher)
                 .setSmallIcon(resId)
                 .setContentTitle(remoteMessage.notification?.title)
                 .setContentText(remoteMessage.notification?.body)
-                //.setContentText("https://www.google.com.ua/")
                 .setLargeIcon(smallIcon)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setAutoCancel(true)
@@ -187,7 +185,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     .setSmallIcon(resId)
                     .setContentTitle(remoteMessage.notification?.title)
                     .setContentText(remoteMessage.notification?.body)
-                    //.setLargeIcon(smallIcon)
                     .setDefaults(Notification.DEFAULT_ALL)
                     .setAutoCancel(true)
                     .setChannelId(channelId)
@@ -220,16 +217,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     @SuppressLint("LongLogTag")
     override fun onNewToken(p0: String) {
+        Log.d(TAG, "Refreshed token: $p0")
+        val service = ApiHelper(RetrofitBuilder.apiService)
+        val pushCache = PushCache()
+
+        service.updateRegistrationId(p0)
+        pushCache.saveRegistrationIdPref(p0)
         //Log.d(TAG, "################ onNewToken##################: $p0")
         //super.onNewToken(p0)
-
-    }
-
-    private fun sendNotification() {
-
-    }
-
-    private fun sendNotificationWithImage() {
 
     }
 }

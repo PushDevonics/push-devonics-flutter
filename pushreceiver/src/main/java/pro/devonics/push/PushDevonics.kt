@@ -62,8 +62,8 @@ class PushDevonics(context: Context, appId: String) {
         val pushCache = PushCache()
         val regId = pushCache.getRegistrationIdFromPref()
         if (regId != null) {
-            val timeData = TimeData(regId, duration)
-            service.sendTimeStatistic(timeData)
+            val timeData = TimeData(duration)
+            service.sendTimeStatistic(regId, timeData)
             //Log.d(TAG, "stopSession: timeData $timeData")
         }
 
