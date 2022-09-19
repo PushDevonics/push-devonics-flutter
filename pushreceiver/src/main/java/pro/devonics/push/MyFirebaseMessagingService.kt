@@ -49,7 +49,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    @SuppressLint("LongLogTag", "UnspecifiedImmutableFlag", "ServiceCast")
+    @SuppressLint("LongLogTag", "UnspecifiedImmutableFlag", "ServiceCast", "DiscouragedApi")
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         //Log.d(TAG, "onMessageReceived")
 
@@ -73,7 +73,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         //Log.d(TAG, "onMessageReceived packageName: $packageName")
 
         val intent = packageManager.getLaunchIntentForPackage(packageName)
-        intent?.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        //intent?.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        intent?.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
 
         // Get image
         val largeIcon = remoteMessage
@@ -81,8 +82,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val smallIcon = remoteMessage.notification?.icon.let { getBitmapFromUrl(it.toString()) }
 
         val rnds = (1..1000).random()
-        val pendingIntent = PendingIntent.getActivity(
-            this, rnds, intent, PendingIntent.FLAG_ONE_SHOT)
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getActivity(
+                this, rnds, intent, PendingIntent.FLAG_MUTABLE)
+        } else {
+            PendingIntent.getActivity(
+                this, rnds, intent, PendingIntent.FLAG_ONE_SHOT)
+        }
+        /*val pendingIntent = PendingIntent.getActivity(
+            this, rnds, intent, PendingIntent.FLAG_ONE_SHOT)*/
         val channelId = "Default"
 
         if (remoteMessage.notification?.imageUrl != null && remoteMessage.notification?.icon == null) {

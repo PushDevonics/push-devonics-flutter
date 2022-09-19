@@ -1,10 +1,16 @@
 package pro.devonics.push
 
+import android.Manifest
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import pro.devonics.push.DataHelper.Companion.createTransition
 import pro.devonics.push.DataHelper.Companion.startTime
 import pro.devonics.push.model.PushData
@@ -15,20 +21,47 @@ import java.util.*
 
 
 private const val TAG = "PushDevonics"
+private const val PERMISSIONS_REQUEST_CODE = 2
 
-class PushDevonics(context: Context, appId: String) {
+class PushDevonics(activity: Activity, appId: String) {
 
     private val service = ApiHelper(RetrofitBuilder.apiService)
-    private val myContext = context
-    private val helperCache = HelperCache(context)
+    private val myContext = activity
+    private val helperCache = HelperCache(activity)
 
     init {
-        AppContextKeeper.setContext(context)
+        AppContextKeeper.setContext(activity)
         PushInitialization.run(appId)
         createInternalId()
         startTime()
         startSession()
         sendTransition()
+        askNotificationPermission()
+    }
+
+    private fun askNotificationPermission() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(myContext, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.v(TAG, "askNotificationPermission: PERMISSION_GRANTED")
+
+                // FCM SDK (and your app) can post notifications.
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    myContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            ) {
+                Log.v(TAG, "askNotificationPermission: ")
+            } else {
+                myContext.requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    PERMISSIONS_REQUEST_CODE
+                )
+            }
+
+        }
     }
 
     private fun sendTransition() {
