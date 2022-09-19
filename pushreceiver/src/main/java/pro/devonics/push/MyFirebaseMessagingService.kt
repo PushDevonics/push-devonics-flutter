@@ -77,9 +77,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         intent?.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
 
         // Get image
-        val largeIcon = remoteMessage
+        /*val largeIcon = remoteMessage
             .notification?.imageUrl.let { getBitmapFromUrl(it.toString()) }
-        val smallIcon = remoteMessage.notification?.icon.let { getBitmapFromUrl(it.toString()) }
+        val smallIcon = remoteMessage.notification?.icon.let { getBitmapFromUrl(it) }*/
+        val largeIcon = remoteMessage
+            .data["image"]?.let { getBitmapFromUrl(it) }
+        //Get icon
+        val smallIcon = remoteMessage.data["icon"]?.let { getBitmapFromUrl(it) }
 
         val rnds = (1..1000).random()
         val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -196,7 +200,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     @SuppressLint("LongLogTag")
-    private fun getBitmapFromUrl(imageUrl: String): Bitmap {
+    private fun getBitmapFromUrl(imageUrl: String?): Bitmap {
         val url = URL(imageUrl)
         val connection = url.openConnection() as HttpURLConnection
         connection.doInput
